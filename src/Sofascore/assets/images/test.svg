@@ -1,0 +1,14 @@
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1300" height="160">
+  <g transform="translate(5, 5)" filter="url(#shadow)">
+    <defs>
+      <filter x="-22%" y="-10%" width="144%" height="142%" id="shadow">
+        <feOffset dy="25" in="SourceAlpha" result="o"/>
+        <feGaussianBlur stdDeviation="27.5" in="o" result="b"/>
+        <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" in="b"/>
+      </filter>
+    </defs>
+    <rect height="130" width="1270" rx="5" ry="5" fill="white"/>
+  </g>
+  <rect transform="translate(5, 5)" width="1290" height="150" rx="5" ry="5"
+fill="#006ecc"/>
+</svg>

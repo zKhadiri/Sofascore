@@ -1,0 +1,4 @@
+<screen name="SofaSingleEvent" position="center,center" size="1920,1080" flags="wfNoBorder" backgroundColor="#0057a3">
+    <widget name="homeTeamList" position="center,center+55" size="1920,870" itemSize="440,295" selectionSize="480,330" margin="15" flex="horizontal" scrollbarMode="showNever" backgroundColor="#0057a3" backgroundPixmap="Zombi-Shadow-FHD/picon_default.png" selectionPixmap="/usr/lib/enigma2/python/Plugins/Extensions/Sofascore/assets/images/hori_sel.png" transparent="1"/>
+    <!-- <widget name="awayTeamList" position="center,center+55" size="1300,870" itemHeight="160" margin="15" scrollbarMode="showNever" backgroundColor="#0057a3" backgroundPixmap="Zombi-Shadow-FHD/picon_default.png" selectionPixmap="/usr/lib/enigma2/python/Plugins/Extensions/Sofascore/assets/images/list_sel.png" transparent="1"/> -->
+</screen>
