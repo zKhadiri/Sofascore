@@ -1,17 +1,4 @@
 <screen name="SofaEvents" position="center,center" size="1920,1080" flags="wfNoBorder" backgroundColor="#0057a3">
     <widget name="title" position="10,25" size="1900,100" foregroundColor="white" font="Bold;80" halign="right" noWrap="1" transparent="1"/>
-    <!-- <widget enableWrapAround="1" position="center,center+55" render="Listbox" scrollbarMode="showNever" backgroundColor="#0057a3" margin="15" backgroundPixmap="Zombi-Shadow-FHD/picon_default.png" selectionPixmap="/usr/lib/enigma2/python/Plugins/Extensions/Sofascore/assets/images/list_sel.png" size="1300,870" source="events" transparent="1">
-        <convert type="TemplatedMultiContent">
-        {"template":[
-        MultiContentEntryText(pos=(10,0),size=(1280,0),text="", backcolor=MultiContentTemplateColor("#00417a")),
-        MultiContentEntryText(pos=(40,20),size=(980,32),text=0,flags=RT_HALIGN_LEFT, color=MultiContentTemplateColor("white"), backcolor_sel=MultiContentTemplateColor('#006ecc')),
-        MultiContentEntryText(pos=(70,75),size=(130,60),text=1,flags=RT_HALIGN_CENTER|RT_WRAP, color=MultiContentTemplateColor("white"), backcolor_sel=MultiContentTemplateColor('#006ecc')),
-        MultiContentEntryText(pos=(300,65),size=(450,30),text=2, color=MultiContentTemplateColor("white"), backcolor_sel=MultiContentTemplateColor('#006ecc')),
-        MultiContentEntryText(pos=(300,110),size=(450,30),text=3, color=MultiContentTemplateColor("white"), backcolor_sel=MultiContentTemplateColor('#006ecc')),
-        MultiContentEntryText(pos=(820,85),size=(70,30),text=4, color=MultiContentTemplateColor("green"), color_sel=MultiContentTemplateColor("green"), backcolor_sel=MultiContentTemplateColor('#006ecc')),
-        MultiContentEntryText(pos=(1180,20),size=(100,30),text=5, font=1, color=MultiContentTemplateColor("#939596"), color_sel=MultiContentTemplateColor("#939596"), backcolor_sel=MultiContentTemplateColor('#006ecc')),],
-        "fonts":[gFont("Bold",26),gFont("Regular",24) ],"itemHeight":160}
-        </convert>
-    </widget> -->
-    <widget name="events" position="center,center+55" size="1300,870" itemHeight="160" margin="15" scrollbarMode="showNever" backgroundColor="#0057a3" backgroundPixmap="Zombi-Shadow-FHD/picon_default.png" selectionPixmap="/usr/lib/enigma2/python/Plugins/Extensions/Sofascore/assets/images/list_sel.png" transparent="1"/>
+    <widget backgroundColorSelected="#006ecc" name="events" position="center,center+55" size="1300,870" itemHeight="160" itemCornerRadius="20" itemSpacing="15" scrollbarMode="showNever" backgroundColor="#0057a3" transparent="1"/>
 </screen>

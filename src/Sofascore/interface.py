@@ -7,7 +7,7 @@ from Components.Label import Label
 from Tools.LoadPixmap import LoadPixmap
 from Tools.Directories import resolveFilename , SCOPE_PLUGINS , fileExists
 from Tools.BoundFunction import boundFunction
-from Components.MultiContent import MultiContentEntryText, MultiContentEntryPixmap, MultiContentEntryPixmapAlphaTest, MultiContentEntryPixmapAlphaBlend, MultiContentTemplateColor
+from Components.MultiContent import MultiContentEntryText, MultiContentEntryRectangle, MultiContentEntryPixmapAlphaTest, MultiContentEntryPixmapAlphaBlend, MultiContentTemplateColor
 from enigma import gFont, eListboxPythonMultiContent, RT_HALIGN_LEFT, RT_HALIGN_CENTER, RT_WRAP, BT_HALIGN_CENTER ,BT_SCALE ,BT_KEEP_ASPECT_RATIO, eTimer
 from twisted.web.client import downloadPage, getPage
 from twisted.internet.ssl import ClientContextFactory
@@ -54,8 +54,9 @@ class SofaInterface(Screen):
 
 	@classmethod
 	def getData(self, callback):
-		url = f'http://api.sofascore.com/api/v1/sport/football/scheduled-events/{date.today()}'
-		getPage(str.encode(url), timeout=10, agent=b'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.13+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2').addCallback(callback).addErrback(self.error, url)
+		url = f'https://api.sofascore.com/api/v1/sport/football/scheduled-events/{date.today()}'
+		sniFactory = WebClientContextFactory(url)
+		getPage(str.encode(url), contextFactory=sniFactory, timeout=10, agent=b'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36').addCallback(callback).addErrback(self.error, url)
 
 	def parseData(self, data):
 		if data:
@@ -77,20 +78,24 @@ class SofaInterface(Screen):
 					if event['status']['type'] == 'inprogress':
 						events['Live'] = {"flag" : "live", "count": live_cpt}
 						live_cpt += 1
+			if events['Live'] == {}:
+				del events['Live']
 			if len(events) > 0:
 				self['sections'].setList([(k, v['flag'], None, str(v['count'])) for k, v in events.items()])
 				for idx,flag in enumerate(self['sections'].list):
 					self.downloadFlag(flag[1], idx)
 
 	def downloadFlag(self, flag, idx):
-		if fileExists(f'/tmp/{flag}.png'):
-			self.setFlag(idx, f'/tmp/{flag}.png')
+		flag_path = f'/usr/lib/enigma2/python/Plugins/Extensions/Sofascore/assets/images/tournemants/{flag}.png'
+		if fileExists(flag_path):
+			self.setFlag(idx, flag_path)
 		else:
 			url = f'https://www.sofascore.com/static/images/flags/{flag}.png'
 			sniFactory = WebClientContextFactory(url)
-			downloadPage(str.encode(url), f'/tmp/{flag}.png', contextFactory=sniFactory, timeout=10, agent=b'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.13+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2').addCallback(self.downloadCallback, f'/tmp/{flag}.png', idx).addErrback(self.error, url)
+			downloadPage(str.encode(url), flag_path, contextFactory=sniFactory, timeout=10, agent=b'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.13+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2').addCallback(self.downloadCallback, flag_path, idx).addErrback(self.error, url)
 	
 	def downloadCallback(self, data, flag_path, idx):
+		print(flag_path)
 		if fileExists(flag_path):
 			self.setFlag(idx, flag_path)
 
@@ -120,6 +125,7 @@ class SofaInterface(Screen):
 						events[event_name].append(event)
 		return events
 	
+	@classmethod
 	def error(self, error, url):
 		if error:
 			print(error, url)
@@ -163,14 +169,15 @@ class SofaSections(Screen):
 		if len(tournaments) > 0:
 			self['tournaments'].setList([(k, v['id'], v['name'], str(v['count']), None) for k, v in tournaments.items()])
 			for idx,tournament in enumerate(self['tournaments'].list):
-				self.downloadIcon(tournament[1], f'{tournament[0]}.png', idx)
+				self.downloadIcon(tournament[1], f'{tournament[0]}_{tournament[1]}.png', idx)
 
 	def downloadIcon(self, id, icon_name, idx):
-		if fileExists(f'/tmp/{icon_name}'):
-			self.setIcon(idx, f'/tmp/{icon_name}')
+		icon_path = f'/usr/lib/enigma2/python/Plugins/Extensions/Sofascore/assets/images/tournemants/{icon_name}'
+		if fileExists(icon_path):
+			self.setIcon(idx, icon_path)
 		else:
 			url = f'http://api.sofascore.app/api/v1/unique-tournament/{id}/image'
-			downloadPage(str.encode(url), f'/tmp/{icon_name}', timeout=10, agent=b'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.13+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2').addCallback(self.downloadCallback, f'/tmp/{icon_name}', idx).addErrback(self.error, url)
+			downloadPage(str.encode(url), icon_path, timeout=10, agent=b'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.13+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2').addCallback(self.downloadCallback, icon_path, idx).addErrback(self.error, url)
 
 	def downloadCallback(self, data, flag_path, idx):
 		if fileExists(flag_path):
@@ -221,7 +228,7 @@ class SofaEvents(Screen):
 
 	def _onLayoutFinish(self):
 		self.fillList()
-		self.timer.start(20000) #60000 1m
+		self.timer.start(20000)
 
 	def fillList(self):
 		cpt = 1
@@ -241,43 +248,44 @@ class SofaEvents(Screen):
 	def buildEntry(self, tournament_name, start_time, homeTeam, awayTeam, score, count, event):
 		res = [None]
 		# print(event['status'])
-		forgroundColorResult = MultiContentTemplateColor("green")
-		forgroundColorHome = MultiContentTemplateColor("white")
+		forgroundColorResult = "green"
+		forgroundColorHome = "white"
 		forgroundColorAway = forgroundColorHome
-		res.append(MultiContentEntryText(pos=(10,0),size=(1280,0),text="", backcolor=MultiContentTemplateColor("#00417a")))
-		res.append(MultiContentEntryText(pos=(40,20),size=(980,32),text=tournament_name,flags=RT_HALIGN_LEFT, color=MultiContentTemplateColor("white"), color_sel=MultiContentTemplateColor("white"), backcolor_sel=MultiContentTemplateColor('#006ecc')))
+		res.append(MultiContentEntryRectangle(pos=(0,0),size=(1300,160), backgroundColor="#00417a", backgroundColorSelected="white", cornerRadius=15))
+		res.append(MultiContentEntryRectangle(pos=(5,5),size=(1290,150), backgroundColor="#00417a", backgroundColorSelected="#006ecc", cornerRadius=15))
+		res.append(MultiContentEntryText(pos=(40,20),size=(980,32),text=tournament_name,flags=RT_HALIGN_LEFT, color="white", color_sel="white", backcolor_sel='#006ecc'))
 
 		if event['status']['type'] == 'notstarted':
-			res.append(MultiContentEntryText(pos=(70,75),size=(130,60),text=start_time,flags=RT_HALIGN_CENTER|RT_WRAP, color=MultiContentTemplateColor("white"),color_sel=MultiContentTemplateColor("white"), backcolor_sel=MultiContentTemplateColor('#006ecc')))
+			res.append(MultiContentEntryText(pos=(70,75),size=(132,60),text=start_time,flags=RT_HALIGN_CENTER|RT_WRAP, color="white",color_sel="white", backcolor_sel='#006ecc'))
 		if event['status']['type'] == 'finished':
 			display_time = datetime.fromtimestamp(event['startTimestamp']).strftime('%H:%M')+'\nFT'
-			res.append(MultiContentEntryText(pos=(70,75),size=(130,60),text=display_time,flags=RT_HALIGN_CENTER|RT_WRAP, color=MultiContentTemplateColor("#939596"),color_sel=MultiContentTemplateColor("#939596"), backcolor_sel=MultiContentTemplateColor('#006ecc')))
+			res.append(MultiContentEntryText(pos=(70,75),size=(130,60),text=display_time,flags=RT_HALIGN_CENTER|RT_WRAP, color="#939596",color_sel="#939596", backcolor_sel='#006ecc'))
 			if 'current' in event['homeScore'] and 'current' in event['awayScore']:
 				if event['homeScore']["current"] > event['awayScore']["current"]:
-					forgroundColorAway = MultiContentTemplateColor("#939596")
+					forgroundColorAway = "#939596"
 				if event['awayScore']["current"] > event['homeScore']["current"]:
-					forgroundColorHome = MultiContentTemplateColor("#939596")
+					forgroundColorHome = "#939596"
 				if event['awayScore']["current"] == event['homeScore']["current"]:
-					forgroundColorHome = MultiContentTemplateColor("#939596")
-					forgroundColorAway = MultiContentTemplateColor("#939596")
-			forgroundColorResult = MultiContentTemplateColor("white")
+					forgroundColorHome = "#939596"
+					forgroundColorAway = "#939596"
+			forgroundColorResult = "white"
 		if event['status']['type'] == 'inprogress':
 			if event['status']['description'] == 'Halftime':
 				display_time = datetime.fromtimestamp(event['startTimestamp']).strftime('%H:%M')+'\nHT'
-				res.append(MultiContentEntryText(pos=(70,75),size=(130,60),text=display_time,flags=RT_HALIGN_CENTER|RT_WRAP, color=MultiContentTemplateColor("white"),color_sel=MultiContentTemplateColor("white"), backcolor_sel=MultiContentTemplateColor('#006ecc')))
+				res.append(MultiContentEntryText(pos=(70,75),size=(130,60),text=display_time,flags=RT_HALIGN_CENTER|RT_WRAP, color="white",color_sel="white", backcolor_sel='#006ecc'))
 			else:
 				event_time = datetime.fromtimestamp(event['startTimestamp']).strftime('%H:%M')
 				minutes_diff = int((datetime.now() - datetime.fromtimestamp(event['statusTime']['timestamp'])).total_seconds() // 60)
 				minutes_diff += 45 if event['status']['description'] == '2nd half' else 0
 				display_time = f"{event_time}\n{minutes_diff}'"
-				res.append(MultiContentEntryText(pos=(70,75),size=(130,60),text=display_time,flags=RT_HALIGN_CENTER|RT_WRAP, color=MultiContentTemplateColor("white"), color_sel=MultiContentTemplateColor("white"), backcolor_sel=MultiContentTemplateColor('#006ecc')))
+				res.append(MultiContentEntryText(pos=(70,75),size=(130,60),text=display_time,flags=RT_HALIGN_CENTER|RT_WRAP, color="white", color_sel="white", backcolor_sel='#006ecc'))
 		if event['status']['type'] == 'canceled':
-			res.append(MultiContentEntryText(pos=(70,75),size=(130,60),text="Canceled",flags=RT_HALIGN_CENTER|RT_WRAP, color=MultiContentTemplateColor("red"),color_sel=MultiContentTemplateColor("red"), backcolor_sel=MultiContentTemplateColor('#006ecc')))
+			res.append(MultiContentEntryText(pos=(70,75),size=(130,60),text="Canceled",flags=RT_HALIGN_CENTER|RT_WRAP, color="red",color_sel="red", backcolor_sel='#006ecc'))
 
-		res.append(MultiContentEntryText(pos=(300,65),size=(450,30),text=homeTeam, color=forgroundColorHome, color_sel=forgroundColorHome, backcolor_sel=MultiContentTemplateColor('#006ecc')))
-		res.append(MultiContentEntryText(pos=(300,110),size=(450,30),text=awayTeam, color=forgroundColorAway, color_sel=forgroundColorAway, backcolor_sel=MultiContentTemplateColor('#006ecc')))
-		res.append(MultiContentEntryText(pos=(820,85),size=(70,30),text=score, color=forgroundColorResult, color_sel=forgroundColorResult, backcolor_sel=MultiContentTemplateColor('#006ecc')))
-		res.append(MultiContentEntryText(pos=(1180,20),size=(100,30),text=count, font=1, color=MultiContentTemplateColor("#939596"), color_sel=MultiContentTemplateColor("#939596"), backcolor_sel=MultiContentTemplateColor('#006ecc')))
+		res.append(MultiContentEntryText(pos=(300,65),size=(450,30),text=homeTeam, color=forgroundColorHome, color_sel=forgroundColorHome, backcolor_sel='#006ecc'))
+		res.append(MultiContentEntryText(pos=(300,110),size=(450,30),text=awayTeam, color=forgroundColorAway, color_sel=forgroundColorAway, backcolor_sel='#006ecc'))
+		res.append(MultiContentEntryText(pos=(820,85),size=(70,30),text=score, color=forgroundColorResult, color_sel=forgroundColorResult, backcolor_sel='#006ecc'))
+		res.append(MultiContentEntryText(pos=(1180,20),size=(100,30),text=count, font=1, color="#939596", color_sel="#939596", backcolor_sel='#006ecc'))
 		return res
 
 	def updateData(self):
@@ -293,10 +301,11 @@ class SofaEvents(Screen):
 			self.fillList()
 
 	def ok(self):
+		pass
 		self.timer.stop()
-		curr_event = self['events'].getCurrent()[6]
-		# print(curr_event['tournament']['uniqueTournament']['id'])
-		self.session.open(SofaSingleEvent, curr_event)
+		# curr_event = self['events'].getCurrent()[6]
+		# # print(curr_event['tournament']['uniqueTournament']['id'])
+		# self.session.open(SofaSingleEvent, curr_event)
 
 	def exit(self):
 		self.timer.stop()
@@ -335,9 +344,9 @@ class SofaSingleEvent(Screen):
 
 	def buildEntry(self, event):
 		res = [None]
-		forgroundColorHome = MultiContentTemplateColor("white")
-		forgroundColorAway = MultiContentTemplateColor("white")
-		res.append(MultiContentEntryText(pos=(0,0),size=(0,0),text="", backcolor=MultiContentTemplateColor("#00417a")))
+		forgroundColorHome = "white"
+		forgroundColorAway = "white"
+		res.append(MultiContentEntryText(pos=(0,0),size=(0,0),text="", backcolor="#00417a"))
 
 		#homeTeam
 		homeTeamLogo = event['homeTeam']['slug']+'.png'

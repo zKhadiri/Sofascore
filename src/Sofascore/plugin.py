@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+from enigma import RADIUS_ALL
 from Plugins.Plugin import PluginDescriptor
 from .interface import SofaInterface
 
