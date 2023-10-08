@@ -215,7 +215,7 @@ class SofaEvents(Screen):
 		self['title'].setText(section)
 		self['events'] = MenuList([], enableWrapAround=True, content=eListboxPythonMultiContent)
 		self['events'].l.setBuildFunc(self.buildEntry)
-		self["events"].l.setFont(0, gFont('Bold', 26))
+		self["events"].l.setFont(0, gFont('Regular', 26))
 		self["events"].l.setFont(1, gFont('Regular', 24))
 		self.skin = readFromFile('assets/skin/SofaEvents.xml')
 		self['Sofaactions'] = ActionMap(['SofaAction'], {
@@ -321,7 +321,7 @@ class SofaSingleEvent(Screen):
 		self.skin = readFromFile('assets/skin/SofaSingleEvent.xml')
 		self['homeTeamList'] = MenuList([], enableWrapAround=True, content=eListboxPythonMultiContent)
 		self['homeTeamList'].l.setBuildFunc(self.buildEntry)
-		self["homeTeamList"].l.setFont(0, gFont('Bold', 26))
+		self["homeTeamList"].l.setFont(0, gFont('Regular', 26))
 		self["homeTeamList"].l.setFont(1, gFont('Regular', 24))
 		self['Sofaactions'] = ActionMap(['SofaAction'], {
 			'cancel': self.exit,
